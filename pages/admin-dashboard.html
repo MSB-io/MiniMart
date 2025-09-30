@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - MiniMart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-64 bg-white text-gray-800 flex flex-col shadow-lg">
+            <div class="flex items-center justify-start px-8 h-20 border-b border-gray-200">
+                <h1 class="text-2xl font-bold text-gray-800">MiniMart.</h1>
+            </div>
+            <nav class="flex-1 px-4 py-6 space-y-2">
+                <a href="#" onclick="showOverview()" class="nav-item active">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Overview</span>
+                </a>
+                <a href="#" onclick="showUsers()" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </a>
+                <a href="#" onclick="showVendors()" class="nav-item">
+                    <i class="fas fa-store"></i>
+                    <span>Vendors</span>
+                </a>
+                <a href="#" onclick="showProducts()" class="nav-item">
+                    <i class="fas fa-box"></i>
+                    <span>Products</span>
+                </a>
+                <a href="#" onclick="showOrders()" class="nav-item">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Orders</span>
+                </a>
+            </nav>
+            <div class="px-4 py-4 border-t border-gray-200">
+                <a href="#" onclick="logout()" class="nav-item logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-y-auto">
+            <div class="p-8">
+                <div id="adminContent">
+                    <div class="px-8 py-6">
+                        <div class="flex justify-between items-center mb-8">
+                            <div>
+                                <h1 class="text-3xl font-bold text-gray-800">Welcome back, Admin!</h1>
+                                <p class="text-gray-500">Here's a snapshot of your marketplace.</p>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <i class="far fa-calendar-alt text-gray-500"></i>
+                                <span id="currentDate" class="text-gray-600 font-medium"></span>
+                            </div>
+                        </div>
+
+                        <!-- Stats Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            <div class="bg-white p-6 rounded-xl shadow-md flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 text-sm">Total Users</p>
+                                    <p class="text-3xl font-bold text-gray-800" id="totalUsers">0</p>
+                                </div>
+                                <div class="p-4 rounded-full bg-blue-100 text-blue-500">
+                                    <i class="fas fa-users text-2xl"></i>
+                                </div>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-md flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 text-sm">Active Vendors</p>
+                                    <p class="text-3xl font-bold text-gray-800" id="totalVendors">0</p>
+                                </div>
+                                <div class="p-4 rounded-full bg-green-100 text-green-500">
+                                    <i class="fas fa-store text-2xl"></i>
+                                </div>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-md flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 text-sm">Total Products</p>
+                                    <p class="text-3xl font-bold text-gray-800" id="totalProducts">0</p>
+                                </div>
+                                <div class="p-4 rounded-full bg-purple-100 text-purple-500">
+                                    <i class="fas fa-box text-2xl"></i>
+                                </div>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-md flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 text-sm">Total Orders</p>
+                                    <p class="text-3xl font-bold text-gray-800" id="totalOrders">0</p>
+                                </div>
+                                <div class="p-4 rounded-full bg-yellow-100 text-yellow-500">
+                                    <i class="fas fa-shopping-cart text-2xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-8">
+                            <!-- Recent Orders -->
+                            <div class="bg-white p-6 rounded-xl shadow-md">
+                                <h2 class="text-xl font-bold mb-4 text-gray-800">Recent Orders</h2>
+                                <div id="recentOrders">
+                                    <!-- Recent orders will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Modals -->
+    <div id="userModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg">
+            <h2 id="userModalTitle" class="text-2xl font-bold mb-6"></h2>
+            <form id="userForm">
+                <input type="hidden" id="userId">
+                <div class="space-y-4">
+                    <div>
+                        <label for="userNameInput" class="block text-sm font-medium text-gray-700">Full Name</label>
+                        <input type="text" id="userNameInput" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="userEmailInput" class="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" id="userEmailInput" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div id="passwordField" class="hidden">
+                        <label for="userPasswordInput" class="block text-sm font-medium text-gray-700">Password</label>
+                        <input type="password" id="userPasswordInput"
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="userRoleSelect" class="block text-sm font-medium text-gray-700">Role</label>
+                        <select id="userRoleSelect" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            <option value="customer">Customer</option>
+                            <option value="vendor">Vendor</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="userStatusSelect" class="block text-sm font-medium text-gray-700">Status</label>
+                        <select id="userStatusSelect" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            <option value="true">Active</option>
+                            <option value="false">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end space-x-4">
+                    <button type="button" onclick="closeUserModal()"
+                        class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition">Cancel</button>
+                    <button type="submit" id="userFormSubmit"
+                        class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Vendor Modal -->
+    <div id="vendorModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg">
+            <h2 id="vendorModalTitle" class="text-2xl font-bold mb-6"></h2>
+            <form id="vendorForm">
+                <input type="hidden" id="vendorId">
+                <div class="space-y-4">
+                    <div>
+                        <label for="vendorNameInput" class="block text-sm font-medium text-gray-700">Business
+                            Name</label>
+                        <input type="text" id="vendorNameInput" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="vendorEmailInput" class="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" id="vendorEmailInput" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div id="vendorPasswordField" class="hidden">
+                        <label for="vendorPasswordInput"
+                            class="block text-sm font-medium text-gray-700">Password</label>
+                        <input type="password" id="vendorPasswordInput"
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="vendorStatusSelect" class="block text-sm font-medium text-gray-700">Status</label>
+                        <select id="vendorStatusSelect" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            <option value="true">Active</option>
+                            <option value="false">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end space-x-4">
+                    <button type="button" onclick="closeVendorModal()"
+                        class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition">Cancel</button>
+                    <button type="submit" id="vendorFormSubmit"
+                        class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div id="productModal"
+        class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto py-10">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-2xl">
+            <h2 id="productModalTitle" class="text-2xl font-bold mb-6"></h2>
+            <form id="productForm">
+                <input type="hidden" id="productId">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="productNameInput" class="block text-sm font-medium text-gray-700">Product
+                                Name</label>
+                            <input type="text" id="productNameInput" required
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="productDescInput"
+                                class="block text-sm font-medium text-gray-700">Description</label>
+                            <textarea id="productDescInput" rows="4" required
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
+                        </div>
+                        <div>
+                            <label for="productVendorSelect"
+                                class="block text-sm font-medium text-gray-700">Vendor</label>
+                            <select id="productVendorSelect" required
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"></select>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="productPriceInput" class="block text-sm font-medium text-gray-700">Price
+                                (₹)</label>
+                            <input type="number" id="productPriceInput" step="0.01" required
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="productStockInput" class="block text-sm font-medium text-gray-700">Stock
+                                Quantity</label>
+                            <input type="number" id="productStockInput" required
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="productImageInput" class="block text-sm font-medium text-gray-700">Product
+                                Image</label>
+                            <input type="file" id="productImageInput" accept="image/*"
+                                class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <img id="productImagePreview" src="" alt="Image Preview"
+                                class="mt-4 rounded-lg max-h-32 hidden">
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end space-x-4">
+                    <button type="button" onclick="closeProductModal()"
+                        class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition">Cancel</button>
+                    <button type="submit" id="productFormSubmit"
+                        class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Order Modal -->
+    <div id="orderModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg">
+            <h2 id="orderModalTitle" class="text-2xl font-bold mb-6"></h2>
+            <form id="orderForm">
+                <input type="hidden" id="orderId">
+                <div class="space-y-4">
+                    <div>
+                        <label for="orderCustomerEmailInput" class="block text-sm font-medium text-gray-700">Customer
+                            Email</label>
+                        <input type="email" id="orderCustomerEmailInput" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="orderTotalInput" class="block text-sm font-medium text-gray-700">Total (₹)</label>
+                        <input type="number" id="orderTotalInput" step="0.01" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="orderStatusSelect" class="block text-sm font-medium text-gray-700">Status</label>
+                        <select id="orderStatusSelect" required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            <option value="pending">Pending</option>
+                            <option value="processing">Processing</option>
+                            <option value="shipped">Shipped</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end space-x-4">
+                    <button type="button" onclick="closeOrderModal()"
+                        class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition">Cancel</button>
+                    <button type="submit" id="orderFormSubmit"
+                        class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: #4a5568;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background-color: #edf2f7;
+            color: #2b6cb0;
+        }
+
+        .nav-item i {
+            margin-right: 12px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .logout-btn:hover {
+            background-color: #fed7d7;
+            color: #c53030;
+        }
+
+        /* Remove .input-style class and use Tailwind utility classes directly in HTML elements */
+    </style>
+
+    <script src="../js/firebase-config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/products.js"></script>
+    <script src="../js/orders.js"></script>
+    <script>
+        // Admin dashboard functions
+        function showOverview() {
+            // If event is available, it means it's a click, so set active nav
+            if (event) {
+                setActiveNav(event.target);
+            }
+
+            // The overview HTML is now part of the page by default.
+            // We just need to load the dynamic stats.
+            loadDashboardStats();
+
+            // If the content was replaced by another view, restore it.
+            const adminContent = document.getElementById('adminContent');
+            if (!adminContent.querySelector('.px-8.py-6')) {
+                adminContent.innerHTML = `
+                    <div class="px-8 py-6">
+                        <div class="flex justify-between items-center mb-8">
+                            <div>
+                                <h1 class="text-3xl font-bold text-gray-800">Welcome back, Admin!</h1>
+                                <p class="text-gray-500">Here's a snapshot of your marketplace.</p>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <i class="far fa-calendar-alt text-gray-500"></i>
+                                <span id="currentDate" class="text-gray-600 font-medium"></span>
+                            </div>
+                        </div>
+
+                        <!-- Stats Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            <div class="bg-white p-6 rounded-xl shadow-md flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 text-sm">Total Users</p>
+                                    <p class="text-3xl font-bold text-gray-800" id="totalUsers">0</p>
+                                </div>
+                                <div class="p-4 rounded-full bg-blue-100 text-blue-500">
+                                    <i class="fas fa-users text-2xl"></i>
+                                </div>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-md flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 text-sm">Active Vendors</p>
+                                    <p class="text-3xl font-bold text-gray-800" id="totalVendors">0</p>
+                                </div>
+                                <div class="p-4 rounded-full bg-green-100 text-green-500">
+                                    <i class="fas fa-store text-2xl"></i>
+                                </div>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-md flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 text-sm">Total Products</p>
+                                    <p class="text-3xl font-bold text-gray-800" id="totalProducts">0</p>
+                                </div>
+                                <div class="p-4 rounded-full bg-purple-100 text-purple-500">
+                                    <i class="fas fa-box text-2xl"></i>
+                                </div>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-md flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 text-sm">Total Orders</p>
+                                    <p class="text-3xl font-bold text-gray-800" id="totalOrders">0</p>
+                                </div>
+                                <div class="p-4 rounded-full bg-yellow-100 text-yellow-500">
+                                    <i class="fas fa-shopping-cart text-2xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-1 gap-8">
+                            <!-- Recent Orders -->
+                            <div class="bg-white p-6 rounded-xl shadow-md">
+                                <h2 class="text-xl font-bold mb-4 text-gray-800">Recent Orders</h2>
+                                <div id="recentOrders">
+                                    <!-- Recent orders will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                loadDashboardStats();
+            }
+        }
+
+        function setActiveNav(element) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            element.classList.add('active');
+        }
+
+        async function loadDashboardStats() {
+            try {
+                // Set loading state
+                document.getElementById('totalUsers').textContent = 'Loading...';
+                document.getElementById('totalVendors').textContent = 'Loading...';
+                document.getElementById('totalProducts').textContent = 'Loading...';
+                document.getElementById('totalOrders').textContent = 'Loading...';
+
+                // Load users count
+                const usersSnapshot = await usersCollection.get();
+                document.getElementById('totalUsers').textContent = usersSnapshot.size;
+
+                // Load vendors count
+                const vendorsSnapshot = await usersCollection.where('role', '==', 'vendor').get();
+                document.getElementById('totalVendors').textContent = vendorsSnapshot.size;
+
+                // Load products count
+                const productsSnapshot = await productsCollection.get();
+                document.getElementById('totalProducts').textContent = productsSnapshot.size;
+
+                // Load orders count
+                const ordersSnapshot = await ordersCollection.get();
+                document.getElementById('totalOrders').textContent = ordersSnapshot.size;
+
+                // Load recent orders
+                loadRecentOrders();
+            } catch (error) {
+                console.error('Error loading dashboard stats:', error);
+                // Set error state
+                document.getElementById('totalUsers').textContent = 'Error';
+                document.getElementById('totalVendors').textContent = 'Error';
+                document.getElementById('totalProducts').textContent = 'Error';
+                document.getElementById('totalOrders').textContent = 'Error';
+            }
+        }
+
+        // Load recent orders
+        async function loadRecentOrders() {
+            try {
+                const ordersSnapshot = await ordersCollection
+                    .orderBy('createdAt', 'desc')
+                    .limit(5)
+                    .get();
+
+                const recentOrdersDiv = document.getElementById('recentOrders');
+                if (ordersSnapshot.empty) {
+                    recentOrdersDiv.innerHTML = '<p class="text-gray-500 text-center py-4">No orders yet</p>';
+                    return;
+                }
+
+                let ordersHTML = '<div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">';
+
+                ordersSnapshot.forEach(doc => {
+                    const order = doc.data();
+                    const date = order.createdAt ? new Date(order.createdAt.toDate()).toLocaleDateString() : 'N/A';
+                    ordersHTML += `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${doc.id.substring(0, 8)}...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${order.customerEmail || 'N/A'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹${order.total || '0.00'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">${order.status || 'pending'}</span></td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${date}</td>
+                        </tr>
+                    `;
+                });
+
+                ordersHTML += '</tbody></table></div>';
+                recentOrdersDiv.innerHTML = ordersHTML;
+            } catch (error) {
+                console.error('Error loading recent orders:', error);
+                document.getElementById('recentOrders').innerHTML = '<p class="text-red-500 text-center py-4">Error loading orders</p>';
+            }
+        }
+
+        // Navigation functions
+        function showUsers() {
+            setActiveNav(event.target);
+            document.getElementById('adminContent').innerHTML = `
+                <div class="px-8 py-6">
+                    <div class="flex justify-between items-center mb-8">
+                        <h1 class="text-3xl font-bold text-gray-800">User Management</h1>
+                        <button onclick="showAddUserModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                            <i class="fas fa-plus mr-2"></i>Add New User
+                        </button>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <div id="usersTableContainer">
+                            <!-- Users table will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            `;
+            loadUsers();
+        }
+
+        function showVendors() {
+            setActiveNav(event.target);
+            document.getElementById('adminContent').innerHTML = `
+                <div class="px-8 py-6">
+                    <div class="flex justify-between items-center mb-8">
+                        <h1 class="text-3xl font-bold text-gray-800">Vendor Management</h1>
+                        <button onclick="showAddVendorModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                            <i class="fas fa-plus mr-2"></i>Add New Vendor
+                        </button>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <div id="vendorsTableContainer">
+                            <!-- Vendors table will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            `;
+            loadVendors();
+        }
+
+        function showProducts() {
+            setActiveNav(event.target);
+            document.getElementById('adminContent').innerHTML = `
+                <div class="px-8 py-6">
+                    <div class="flex justify-between items-center mb-8">
+                        <h1 class="text-3xl font-bold text-gray-800">Product Management</h1>
+                        <button onclick="showAddProductModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                            <i class="fas fa-plus mr-2"></i>Add New Product
+                        </button>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <div id="productsTableContainer">
+                            <!-- Products table will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            `;
+            loadProducts();
+        }
+
+        function showOrders() {
+            setActiveNav(event.target);
+            document.getElementById('adminContent').innerHTML = `
+                <div class="px-8 py-6">
+                    <div class="flex justify-between items-center mb-8">
+                        <h1 class="text-3xl font-bold text-gray-800">Order Management</h1>
+                        <button onclick="showAddOrderModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                            <i class="fas fa-plus mr-2"></i>Add New Order
+                        </button>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <div id="ordersTableContainer">
+                            <!-- Orders table will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            `;
+            loadOrders();
+        }
+
+        // Logout function
+        async function logout() {
+            try {
+                await auth.signOut();
+                // Redirect to main page
+                window.location.href = '../index.html';
+            } catch (error) {
+                console.error('Error signing out:', error);
+                alert('Error logging out. Please try again.');
+            }
+        }
+
+        // User Management Functions
+        async function loadUsers() {
+            try {
+                const usersSnapshot = await usersCollection.get();
+                const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderUsersTable(users);
+            } catch (error) {
+                console.error("Error loading users:", error);
+                document.getElementById('usersTableContainer').innerHTML = '<p class="text-red-500">Error loading users.</p>';
+            }
+        }
+
+        function renderUsersTable(users) {
+            let tableHtml = `
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+            `;
+
+            if (users.length === 0) {
+                tableHtml += '<tr><td colspan="5" class="text-center py-4">No users found.</td></tr>';
+            } else {
+                users.forEach(user => {
+                    tableHtml += `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${user.name}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.email}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.role}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                    ${user.isActive ? 'Active' : 'Inactive'}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button onclick="showEditUserModal('${user.id}')" class="text-blue-600 hover:text-blue-900">Edit</button>
+                                <button onclick="deleteUser('${user.id}', '${user.name}')" class="text-red-600 hover:text-red-900 ml-4">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            tableHtml += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            document.getElementById('usersTableContainer').innerHTML = tableHtml;
+        }
+
+        function showAddUserModal() {
+            document.getElementById('userModalTitle').textContent = 'Add New User';
+            document.getElementById('userForm').reset();
+            document.getElementById('userId').value = '';
+            document.getElementById('userEmailInput').disabled = false;
+            document.getElementById('passwordField').style.display = 'block';
+            document.getElementById('userPasswordInput').required = true;
+            document.getElementById('userFormSubmit').textContent = 'Create User';
+            document.getElementById('userForm').onsubmit = handleAddUser;
+            document.getElementById('userModal').classList.remove('hidden');
+        }
+
+        async function showEditUserModal(userId) {
+            try {
+                const userDoc = await usersCollection.doc(userId).get();
+                if (!userDoc.exists) {
+                    alert('User not found.');
+                    return;
+                }
+                const user = userDoc.data();
+                document.getElementById('userModalTitle').textContent = 'Edit User';
+                document.getElementById('userForm').reset();
+                document.getElementById('userId').value = userId;
+                document.getElementById('userNameInput').value = user.name;
+                document.getElementById('userEmailInput').value = user.email;
+                document.getElementById('userEmailInput').disabled = true;
+                document.getElementById('userRoleSelect').value = user.role;
+                document.getElementById('userStatusSelect').value = user.isActive;
+                document.getElementById('passwordField').style.display = 'none';
+                document.getElementById('userPasswordInput').required = false;
+                document.getElementById('userFormSubmit').textContent = 'Save Changes';
+                document.getElementById('userForm').onsubmit = handleUpdateUser;
+                document.getElementById('userModal').classList.remove('hidden');
+            } catch (error) {
+                console.error("Error fetching user for edit:", error);
+                alert('Failed to load user data.');
+            }
+        }
+
+        function closeUserModal() {
+            document.getElementById('userModal').classList.add('hidden');
+        }
+
+        async function handleAddUser(event) {
+            event.preventDefault();
+            const name = document.getElementById('userNameInput').value;
+            const email = document.getElementById('userEmailInput').value;
+            const password = document.getElementById('userPasswordInput').value;
+            const role = document.getElementById('userRoleSelect').value;
+            const isActive = document.getElementById('userStatusSelect').value === 'true';
+
+            try {
+                // Note: This is a simplified user creation. In a real app, you'd use a backend function
+                // to create a user to avoid exposing auth logic on the client.
+                const tempApp = firebase.initializeApp(firebaseConfig, "Secondary");
+                const tempAuth = tempApp.auth();
+                const userCredential = await tempAuth.createUserWithEmailAndPassword(email, password);
+
+                await usersCollection.doc(userCredential.user.uid).set({
+                    name,
+                    email,
+                    role,
+                    isActive,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                await tempAuth.signOut();
+                await tempApp.delete();
+
+                alert('User created successfully!');
+                closeUserModal();
+                loadUsers();
+            } catch (error) {
+                console.error("Error creating user:", error);
+                alert('Failed to create user: ' + error.message);
+            }
+        }
+
+        async function handleUpdateUser(event) {
+            event.preventDefault();
+            const userId = document.getElementById('userId').value;
+            const name = document.getElementById('userNameInput').value;
+            const role = document.getElementById('userRoleSelect').value;
+            const isActive = document.getElementById('userStatusSelect').value === 'true';
+
+            try {
+                await usersCollection.doc(userId).update({
+                    name,
+                    role,
+                    isActive
+                });
+                alert('User updated successfully!');
+                closeUserModal();
+                loadUsers();
+            } catch (error) {
+                console.error("Error updating user:", error);
+                alert('Failed to update user.');
+            }
+        }
+
+        async function deleteUser(userId, userName) {
+            if (confirm(`Are you sure you want to delete user "${userName}"? This is a soft delete.`)) {
+                try {
+                    await usersCollection.doc(userId).update({ isActive: false });
+                    alert('User has been deactivated.');
+                    loadUsers();
+                } catch (error) {
+                    console.error("Error deactivating user:", error);
+                    alert('Failed to deactivate user.');
+                }
+            }
+        }
+
+        // Vendor Management Functions
+        async function loadVendors() {
+            try {
+                const vendorsSnapshot = await usersCollection.where('role', '==', 'vendor').get();
+                const vendors = vendorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderVendorsTable(vendors);
+            } catch (error) {
+                console.error("Error loading vendors:", error);
+                document.getElementById('vendorsTableContainer').innerHTML = '<p class="text-red-500">Error loading vendors.</p>';
+            }
+        }
+
+        function renderVendorsTable(vendors) {
+            let tableHtml = `
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Business Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+            `;
+
+            if (vendors.length === 0) {
+                tableHtml += '<tr><td colspan="4" class="text-center py-4">No vendors found.</td></tr>';
+            } else {
+                vendors.forEach(vendor => {
+                    tableHtml += `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${vendor.name}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${vendor.email}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${vendor.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                    ${vendor.isActive ? 'Active' : 'Inactive'}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button onclick="showEditVendorModal('${vendor.id}')" class="text-blue-600 hover:text-blue-900">Edit</button>
+                                <button onclick="deleteVendor('${vendor.id}', '${vendor.name}')" class="text-red-600 hover:text-red-900 ml-4">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            tableHtml += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            document.getElementById('vendorsTableContainer').innerHTML = tableHtml;
+        }
+
+        function showAddVendorModal() {
+            document.getElementById('vendorModalTitle').textContent = 'Add New Vendor';
+            document.getElementById('vendorForm').reset();
+            document.getElementById('vendorId').value = '';
+            document.getElementById('vendorEmailInput').disabled = false;
+            document.getElementById('vendorPasswordField').style.display = 'block';
+            document.getElementById('vendorPasswordInput').required = true;
+            document.getElementById('vendorFormSubmit').textContent = 'Create Vendor';
+            document.getElementById('vendorForm').onsubmit = handleAddVendor;
+            document.getElementById('vendorModal').classList.remove('hidden');
+        }
+
+        async function showEditVendorModal(vendorId) {
+            try {
+                const vendorDoc = await usersCollection.doc(vendorId).get();
+                if (!vendorDoc.exists) {
+                    alert('Vendor not found.');
+                    return;
+                }
+                const vendor = vendorDoc.data();
+                document.getElementById('vendorModalTitle').textContent = 'Edit Vendor';
+                document.getElementById('vendorForm').reset();
+                document.getElementById('vendorId').value = vendorId;
+                document.getElementById('vendorNameInput').value = vendor.name;
+                document.getElementById('vendorEmailInput').value = vendor.email;
+                document.getElementById('vendorEmailInput').disabled = true;
+                document.getElementById('vendorStatusSelect').value = vendor.isActive;
+                document.getElementById('vendorPasswordField').style.display = 'none';
+                document.getElementById('vendorPasswordInput').required = false;
+                document.getElementById('vendorFormSubmit').textContent = 'Save Changes';
+                document.getElementById('vendorForm').onsubmit = handleUpdateVendor;
+                document.getElementById('vendorModal').classList.remove('hidden');
+            } catch (error) {
+                console.error("Error fetching vendor for edit:", error);
+                alert('Failed to load vendor data.');
+            }
+        }
+
+        function closeVendorModal() {
+            document.getElementById('vendorModal').classList.add('hidden');
+        }
+
+        async function handleAddVendor(event) {
+            event.preventDefault();
+            const name = document.getElementById('vendorNameInput').value;
+            const email = document.getElementById('vendorEmailInput').value;
+            const password = document.getElementById('vendorPasswordInput').value;
+            const isActive = document.getElementById('vendorStatusSelect').value === 'true';
+
+            try {
+                const tempApp = firebase.initializeApp(firebaseConfig, "SecondaryVendor");
+                const tempAuth = tempApp.auth();
+                const userCredential = await tempAuth.createUserWithEmailAndPassword(email, password);
+
+                await usersCollection.doc(userCredential.user.uid).set({
+                    name,
+                    email,
+                    role: 'vendor',
+                    isActive,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                await tempAuth.signOut();
+                await tempApp.delete();
+
+                alert('Vendor created successfully!');
+                closeVendorModal();
+                loadVendors();
+            } catch (error) {
+                console.error("Error creating vendor:", error);
+                alert('Failed to create vendor: ' + error.message);
+            }
+        }
+
+        async function handleUpdateVendor(event) {
+            event.preventDefault();
+            const vendorId = document.getElementById('vendorId').value;
+            const name = document.getElementById('vendorNameInput').value;
+            const isActive = document.getElementById('vendorStatusSelect').value === 'true';
+
+            try {
+                await usersCollection.doc(vendorId).update({
+                    name,
+                    isActive
+                });
+                alert('Vendor updated successfully!');
+                closeVendorModal();
+                loadVendors();
+            } catch (error) {
+                console.error("Error updating vendor:", error);
+                alert('Failed to update vendor.');
+            }
+        }
+
+        async function deleteVendor(vendorId, vendorName) {
+            if (confirm(`Are you sure you want to deactivate vendor "${vendorName}"?`)) {
+                try {
+                    await usersCollection.doc(vendorId).update({ isActive: false });
+                    alert('Vendor has been deactivated.');
+                    loadVendors();
+                } catch (error) {
+                    console.error("Error deactivating vendor:", error);
+                    alert('Failed to deactivate vendor.');
+                }
+            }
+        }
+
+        // Product Management Functions
+        async function loadProducts() {
+            try {
+                const productsSnapshot = await productsCollection.get();
+                const products = [];
+                for (const doc of productsSnapshot.docs) {
+                    const product = { id: doc.id, ...doc.data() };
+                    if (product.vendorId) {
+                        const vendorDoc = await usersCollection.doc(product.vendorId).get();
+                        product.vendorName = vendorDoc.exists ? vendorDoc.data().name : 'Unknown';
+                    } else {
+                        product.vendorName = 'N/A';
+                    }
+                    products.push(product);
+                }
+                renderProductsTable(products);
+            } catch (error) {
+                console.error("Error loading products:", error);
+                document.getElementById('productsTableContainer').innerHTML = '<p class="text-red-500">Error loading products.</p>';
+            }
+        }
+
+        function renderProductsTable(products) {
+            let tableHtml = `
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendor</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+            `;
+
+            if (products.length === 0) {
+                tableHtml += '<tr><td colspan="6" class="text-center py-4">No products found.</td></tr>';
+            } else {
+                products.forEach(product => {
+                    tableHtml += `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap"><img src="${product.imageUrl}" alt="${product.name}" class="w-12 h-12 object-cover rounded-md"></td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${product.name}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.vendorName}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹${product.price.toFixed(2)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.stock}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button onclick="showEditProductModal('${product.id}')" class="text-blue-600 hover:text-blue-900">Edit</button>
+                                <button onclick="deleteProduct('${product.id}', '${product.name}')" class="text-red-600 hover:text-red-900 ml-4">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            tableHtml += `</tbody></table></div>`;
+            document.getElementById('productsTableContainer').innerHTML = tableHtml;
+        }
+
+        async function loadVendorsForSelect(selectedVendorId = null) {
+            const select = document.getElementById('productVendorSelect');
+            select.innerHTML = '<option value="">Loading vendors...</option>';
+            try {
+                const vendorsSnapshot = await usersCollection.where('role', '==', 'vendor').where('isActive', '==', true).get();
+                select.innerHTML = '<option value="">Select a Vendor</option>';
+                vendorsSnapshot.forEach(doc => {
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = doc.data().name;
+                    if (doc.id === selectedVendorId) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Error loading vendors for select:", error);
+                select.innerHTML = '<option value="">Error loading vendors</option>';
+            }
+        }
+
+        function showAddProductModal() {
+            document.getElementById('productModalTitle').textContent = 'Add New Product';
+            document.getElementById('productForm').reset();
+            document.getElementById('productId').value = '';
+            document.getElementById('productImagePreview').classList.add('hidden');
+            document.getElementById('productImageInput').required = true;
+            document.getElementById('productFormSubmit').textContent = 'Create Product';
+            document.getElementById('productForm').onsubmit = handleAddProduct;
+            loadVendorsForSelect();
+            document.getElementById('productModal').classList.remove('hidden');
+        }
+
+        async function showEditProductModal(productId) {
+            try {
+                const productDoc = await productsCollection.doc(productId).get();
+                if (!productDoc.exists) {
+                    alert('Product not found.');
+                    return;
+                }
+                const product = productDoc.data();
+                document.getElementById('productModalTitle').textContent = 'Edit Product';
+                document.getElementById('productForm').reset();
+                document.getElementById('productId').value = productId;
+                document.getElementById('productNameInput').value = product.name;
+                document.getElementById('productDescInput').value = product.description;
+                document.getElementById('productPriceInput').value = product.price;
+                document.getElementById('productStockInput').value = product.stock;
+                document.getElementById('productImagePreview').src = product.imageUrl;
+                document.getElementById('productImagePreview').classList.remove('hidden');
+                document.getElementById('productImageInput').required = false;
+                document.getElementById('productFormSubmit').textContent = 'Save Changes';
+                document.getElementById('productForm').onsubmit = handleUpdateProduct;
+                await loadVendorsForSelect(product.vendorId);
+                document.getElementById('productModal').classList.remove('hidden');
+            } catch (error) {
+                console.error("Error fetching product for edit:", error);
+                alert('Failed to load product data.');
+            }
+        }
+
+        function closeProductModal() {
+            document.getElementById('productModal').classList.add('hidden');
+        }
+
+        async function handleAddProduct(event) {
+            event.preventDefault();
+            const name = document.getElementById('productNameInput').value;
+            const description = document.getElementById('productDescInput').value;
+            const price = parseFloat(document.getElementById('productPriceInput').value);
+            const stock = parseInt(document.getElementById('productStockInput').value);
+            const vendorId = document.getElementById('productVendorSelect').value;
+            const imageFile = document.getElementById('productImageInput').files[0];
+
+            if (!imageFile) {
+                alert('Please select a product image.');
+                return;
+            }
+
+            try {
+                const imageRef = storage.ref(`products/${Date.now()}_${imageFile.name}`);
+                const snapshot = await imageRef.put(imageFile);
+                const imageUrl = await snapshot.ref.getDownloadURL();
+
+                await productsCollection.add({
+                    name,
+                    description,
+                    price,
+                    stock,
+                    vendorId,
+                    imageUrl,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                alert('Product added successfully!');
+                closeProductModal();
+                loadProducts();
+            } catch (error) {
+                console.error("Error adding product:", error);
+                alert('Failed to add product: ' + error.message);
+            }
+        }
+
+        async function handleUpdateProduct(event) {
+            event.preventDefault();
+            const productId = document.getElementById('productId').value;
+            const name = document.getElementById('productNameInput').value;
+            const description = document.getElementById('productDescInput').value;
+            const price = parseFloat(document.getElementById('productPriceInput').value);
+            const stock = parseInt(document.getElementById('productStockInput').value);
+            const vendorId = document.getElementById('productVendorSelect').value;
+            const imageFile = document.getElementById('productImageInput').files[0];
+
+            const updateData = { name, description, price, stock, vendorId };
+
+            try {
+                if (imageFile) {
+                    const imageRef = storage.ref(`products/${Date.now()}_${imageFile.name}`);
+                    const snapshot = await imageRef.put(imageFile);
+                    updateData.imageUrl = await snapshot.ref.getDownloadURL();
+                }
+
+                await productsCollection.doc(productId).update(updateData);
+                alert('Product updated successfully!');
+                closeProductModal();
+                loadProducts();
+            } catch (error) {
+                console.error("Error updating product:", error);
+                alert('Failed to update product.');
+            }
+        }
+
+        async function deleteProduct(productId, productName) {
+            if (confirm(`Are you sure you want to delete product "${productName}"? This action cannot be undone.`)) {
+                try {
+                    await productsCollection.doc(productId).delete();
+                    alert('Product deleted successfully.');
+                    loadProducts();
+                } catch (error) {
+                    console.error("Error deleting product:", error);
+                    alert('Failed to delete product.');
+                }
+            }
+        }
+
+        // Order Management Functions
+        async function loadOrders() {
+            try {
+                const ordersSnapshot = await ordersCollection.get();
+                const orders = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderOrdersTable(orders);
+            } catch (error) {
+                console.error("Error loading orders:", error);
+                document.getElementById('ordersTableContainer').innerHTML = '<p class="text-red-500">Error loading orders.</p>';
+            }
+        }
+
+        function renderOrdersTable(orders) {
+            let tableHtml = `
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+            `;
+
+            if (orders.length === 0) {
+                tableHtml += '<tr><td colspan="6" class="text-center py-4">No orders found.</td></tr>';
+            } else {
+                orders.forEach(order => {
+                    const date = order.createdAt ? new Date(order.createdAt.toDate()).toLocaleDateString() : 'N/A';
+                    tableHtml += `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${order.id.substring(0, 8)}...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${order.customerEmail || 'N/A'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹${order.total || '0.00'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getOrderStatusClass(order.status)}">
+                                    ${order.status || 'pending'}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${date}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button onclick="showEditOrderModal('${order.id}')" class="text-blue-600 hover:text-blue-900">Edit</button>
+                                <button onclick="deleteOrder('${order.id}', '${order.id}')" class="text-red-600 hover:text-red-900 ml-4">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            tableHtml += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            document.getElementById('ordersTableContainer').innerHTML = tableHtml;
+        }
+
+        function getOrderStatusClass(status) {
+            switch (status) {
+                case 'pending':
+                    return 'bg-yellow-100 text-yellow-800';
+                case 'processing':
+                    return 'bg-blue-100 text-blue-800';
+                case 'shipped':
+                    return 'bg-green-100 text-green-800';
+                case 'delivered':
+                    return 'bg-purple-100 text-purple-800';
+                case 'cancelled':
+                    return 'bg-red-100 text-red-800';
+                default:
+                    return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        function showAddOrderModal() {
+            document.getElementById('orderModalTitle').textContent = 'Add New Order';
+            document.getElementById('orderForm').reset();
+            document.getElementById('orderId').value = '';
+            document.getElementById('orderFormSubmit').textContent = 'Create Order';
+            document.getElementById('orderForm').onsubmit = handleAddOrder;
+            document.getElementById('orderModal').classList.remove('hidden');
+        }
+
+        async function showEditOrderModal(orderId) {
+            try {
+                const orderDoc = await ordersCollection.doc(orderId).get();
+                if (!orderDoc.exists) {
+                    alert('Order not found.');
+                    return;
+                }
+                const order = orderDoc.data();
+                document.getElementById('orderModalTitle').textContent = 'Edit Order';
+                document.getElementById('orderForm').reset();
+                document.getElementById('orderId').value = orderId;
+                document.getElementById('orderCustomerEmailInput').value = order.customerEmail;
+                document.getElementById('orderTotalInput').value = order.total;
+                document.getElementById('orderStatusSelect').value = order.status;
+                document.getElementById('orderFormSubmit').textContent = 'Save Changes';
+                document.getElementById('orderForm').onsubmit = handleUpdateOrder;
+                document.getElementById('orderModal').classList.remove('hidden');
+            } catch (error) {
+                console.error("Error fetching order for edit:", error);
+                alert('Failed to load order data.');
+            }
+        }
+
+        function closeOrderModal() {
+            document.getElementById('orderModal').classList.add('hidden');
+        }
+
+        async function handleAddOrder(event) {
+            event.preventDefault();
+            const customerEmail = document.getElementById('orderCustomerEmailInput').value;
+            const total = parseFloat(document.getElementById('orderTotalInput').value);
+            const status = document.getElementById('orderStatusSelect').value;
+
+            try {
+                await ordersCollection.add({
+                    customerEmail,
+                    total,
+                    status,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                alert('Order created successfully!');
+                closeOrderModal();
+                loadOrders();
+            } catch (error) {
+                console.error("Error creating order:", error);
+                alert('Failed to create order: ' + error.message);
+            }
+        }
+
+        async function handleUpdateOrder(event) {
+            event.preventDefault();
+            const orderId = document.getElementById('orderId').value;
+            const customerEmail = document.getElementById('orderCustomerEmailInput').value;
+            const total = parseFloat(document.getElementById('orderTotalInput').value);
+            const status = document.getElementById('orderStatusSelect').value;
+
+            try {
+                await ordersCollection.doc(orderId).update({
+                    customerEmail,
+                    total,
+                    status
+                });
+                alert('Order updated successfully!');
+                closeOrderModal();
+                loadOrders();
+            } catch (error) {
+                console.error("Error updating order:", error);
+                alert('Failed to update order.');
+            }
+        }
+
+        async function deleteOrder(orderId, orderName) {
+            if (confirm(`Are you sure you want to delete order "${orderName}"? This action cannot be undone.`)) {
+                try {
+                    await ordersCollection.doc(orderId).delete();
+                    alert('Order deleted successfully.');
+                    loadOrders();
+                } catch (error) {
+                    console.error("Error deleting order:", error);
+                    alert('Failed to delete order.');
+                }
+            }
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            // Wait for Firebase to initialize and user to be authenticated
+            const checkFirebase = setInterval(() => {
+                if (firebase.apps.length && db) {
+                    clearInterval(checkFirebase);
+                    // Set the active nav item for overview on initial load
+                    const overviewItem = document.querySelector('a[onclick="showOverview()"]');
+                    if (overviewItem) setActiveNav(overviewItem);
+
+                    loadDashboardStats();
+                }
+            }, 100);
+        });
+    </script>
+</body>
+
+</html>

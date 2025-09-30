@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="        /* Navbar scroll effect */
+        .navbar-scrolled {
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8));
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.5);
+        }
+        
+        /* Add padding to body to account for floating navbar */
+        body {
+            padding-top: 100px;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding-top: 120px;
+            }
+        }ice-width, initial-scale=1.0">
+    <title>MiniMart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .glass-nav {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.75));
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.4);
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        .glass-search {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .glass-search:focus {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .glass-dropdown {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        .navbar-float {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 40px);
+            max-width: 1200px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar-float {
+                top: 10px;
+                width: calc(100% - 20px);
+            }
+        }
+
+        .nav-button {
+            transition: all 0.3s ease;
+        }
+
+        .cart-badge {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        /* Add padding to body to account for floating navbar */
+        body {
+            padding-top: 100px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 120px;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <!-- Floating Glassmorphism Navigation -->
+    <nav class="navbar-float glass-nav rounded-2xl">
+        <div class="px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-gray-800 cursor-pointer hover:text-blue-600 transition-colors duration-300"
+                        onclick="showHome()">
+                        MiniMart.
+                    </h1>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="flex-1 max-w-lg mx-4 lg:mx-8 hidden md:block">
+                    <div class="relative">
+                        <input type="text" id="searchInput" placeholder="Search products..."
+                            class="glass-search w-full px-4 py-2.5 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-50 transition-all duration-300">
+                        <button onclick="searchProducts()"
+                            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-800 transition-colors duration-300">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Navigation Links -->
+                <div class="flex items-center space-x-2 lg:space-x-4">
+                    <!-- Mobile Search Toggle -->
+                    <button onclick="toggleMobileSearch()"
+                        class="md:hidden p-2 text-gray-700 hover:text-blue-600 transition-colors duration-300">
+                        <i class="fas fa-search text-lg"></i>
+                    </button>
+
+                    <!-- Cart Button -->
+                    <button onclick="showCart()"
+                        class="relative p-2 text-gray-700 hover:text-blue-600 nav-button rounded-lg transition-all duration-300">
+                        <i class="fas fa-shopping-cart text-lg"></i>
+                        <span id="cartCount"
+                            class="cart-badge absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden shadow-lg">0</span>
+                    </button>
+
+                    <!-- Auth Buttons -->
+                    <div id="authButtons" class="flex space-x-2">
+                        <button onclick="showLogin()"
+                            class="px-3 py-2 text-gray-700 hover:text-blue-600 nav-button rounded-lg transition-all duration-300 hidden sm:block">
+                            Login
+                        </button>
+                        <button onclick="showRegister()"
+                            class="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 nav-button transition-all duration-300 shadow-lg">
+                            Sign Up
+                        </button>
+                    </div>
+
+                    <!-- User Menu -->
+                    <div id="userMenu" class="hidden relative">
+                        <button onclick="toggleUserMenu()"
+                            class="flex items-center space-x-2 text-gray-700 hover:text-blue-600 nav-button p-2 rounded-lg transition-all duration-300">
+                            <i class="fas fa-user-circle text-lg"></i>
+                            <span id="userName" class="hidden sm:inline"></span>
+                            <i class="fas fa-chevron-down text-sm"></i>
+                        </button>
+                        <div id="userDropdown"
+                            class="hidden absolute right-0 mt-3 w-48 glass-dropdown rounded-xl shadow-2xl border border-white border-opacity-20">
+                            <div class="py-2">
+                                <button onclick="showDashboard()"
+                                    class="block w-full text-left px-4 py-3 text-gray-700 hover:bg-white hover:bg-opacity-20 transition-all duration-300 rounded-lg mx-2">
+                                    <i class="fas fa-tachometer-alt mr-3 text-blue-500"></i>Dashboard
+                                </button>
+                                <button onclick="showOrders()"
+                                    class="block w-full text-left px-4 py-3 text-gray-700 hover:bg-white hover:bg-opacity-20 transition-all duration-300 rounded-lg mx-2">
+                                    <i class="fas fa-box mr-3 text-green-500"></i>My Orders
+                                </button>
+                                <hr class="my-2 border-white border-opacity-20">
+                                <button onclick="logout()"
+                                    class="block w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 hover:bg-opacity-20 transition-all duration-300 rounded-lg mx-2">
+                                    <i class="fas fa-sign-out-alt mr-3"></i>Logout
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Search Bar -->
+        <div id="mobileSearchBar" class="hidden md:hidden px-4 pb-4">
+            <div class="relative">
+                <input type="text" id="mobileSearchInput" placeholder="Search products..."
+                    class="glass-search w-full px-4 py-2.5 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-50 transition-all duration-300">
+                <button onclick="searchProductsMobile()"
+                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-800 transition-colors duration-300">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div id="mainContent" class="min-h-screen">
+        <!-- Home Page Content -->
+        <div id="homePage" class="page-content">
+            <!-- Hero Section -->
+            <div class="py-12 px-4">
+                <div
+                    class="max-w-4xl mx-auto bg-gradient-to-r from-blue-600 to-purple-700 text-white py-20 px-8 rounded-3xl shadow-2xl">
+                    <div class="text-center">
+                        <h1 class="text-5xl font-bold mb-4">Welcome to MiniMart</h1>
+                        <p class="text-xl mb-8">Discover products from multiple vendors in one place</p>
+                        <button onclick="showProducts()"
+                            class="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition transform hover:scale-105">
+                            Shop Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <!-- Featured Products -->
+            <div class="max-w-7xl mx-auto px-4 py-16">
+                <h2 class="text-3xl font-bold text-center mb-12">Featured Products</h2>
+                <div id="featuredProducts" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <!-- Featured products will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Other page contents will be loaded dynamically -->
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg">
+            <div class="flex items-center space-x-4">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span>Loading...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/products.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/orders.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
