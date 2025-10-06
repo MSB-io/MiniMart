@@ -2,6 +2,10 @@
 
 A complete multivendor marketplace called MiniMart, built with HTML, Tailwind CSS, JavaScript, and Firebase as Backend-as-a-Service.
 
+## Live Demo
+
+You can access the live demo here: https://mvoms3.web.app/
+
 ## Features
 
 ### ✅ User Management
@@ -179,16 +183,6 @@ php -S localhost:8000
 - View all orders and products
 - Access comprehensive analytics
 
-## Default Categories
-
-The application initializes with these default categories:
-
-- Electronics
-- Clothing
-- Home & Garden
-- Books
-- Sports
-- Health & Beauty
 
 ## Key Features Explained
 
@@ -196,20 +190,17 @@ The application initializes with these default categories:
 
 - Secure email/password authentication
 - Role-based access control
-- Persistent login sessions
 - User profile management
 
 ### Product Management
 
 - Image upload with Firebase Storage
 - Stock tracking and management
-- Category-based organization
 - Search and filter functionality
 
 ### Shopping Cart
 
 - Multi-vendor cart support
-- Persistent cart storage
 - Real-time stock validation
 - Quantity management
 
@@ -218,7 +209,6 @@ The application initializes with these default categories:
 - Single checkout for multiple vendors
 - Order status tracking
 - Automatic inventory updates
-- Email notifications (placeholder)
 
 ### Responsive Design
 
@@ -227,40 +217,8 @@ The application initializes with these default categories:
 - Modern UI/UX design
 - Cross-browser compatibility
 
-## Future Enhancements
-
-### Phase 2 Features
-
-- Payment gateway integration (Stripe/PayPal)
-- Email notifications system
-- Advanced search with filters
-- Product reviews and ratings
-- Vendor analytics dashboard
-
-### Phase 3 Features
-
-- Multi-language support
-- Mobile app (React Native/Flutter)
-- Advanced shipping integrations
-- Marketing tools and promotions
-- Live chat support
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
 ## License
 
 This project is open source and available under the [MIT License](LICENSE).
-
-## Support
-
-For support and questions, please open an issue in the repository or contact the development team.
-
----
 
 **Note**: Remember to update your Firebase configuration before running the application. The default configuration will not work without your actual Firebase project credentials.
