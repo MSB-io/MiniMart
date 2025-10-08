@@ -97,11 +97,11 @@ function showAddProduct() {
 async function loadProducts() {
   showLoading();
   try {
-    let query = productsCollection.where("isActive", "==", true);
+    let query = productsCollection.where("isActive", "==", true); // Only active products
 
     // If vendor, show only their products
     if (userRole === "vendor") {
-      query = query.where("vendorId", "==", currentUser.uid);
+      query = query.where("vendorId", "==", currentUser.uid); // Filter by vendor ID
     }
 
     const snapshot = await query.get();
@@ -210,7 +210,7 @@ async function handleAddProduct(event) {
   showLoading();
 
   try {
-    const name = document.getElementById("productName").value;
+    const name = document.getElementById("productName").value; 
     const price = parseFloat(document.getElementById("productPrice").value);
     const stock = parseInt(document.getElementById("productStock").value);
     const description = document.getElementById("productDescription").value;
@@ -219,12 +219,12 @@ async function handleAddProduct(event) {
     let imageUrl = "";
 
     // Upload image if provided
-    if (imageFile) {
-      const storageRef = storage
-        .ref()
-        .child(`products/${Date.now()}_${imageFile.name}`);
-      const snapshot = await storageRef.put(imageFile);
-      imageUrl = await snapshot.ref.getDownloadURL();
+    if (imageFile) { // Check if image file is selected
+      const storageRef = storage // Create a storage reference
+        .ref() 
+        .child(`products/${Date.now()}_${imageFile.name}`); // Unique path
+      const snapshot = await storageRef.put(imageFile); // Upload the file
+      imageUrl = await snapshot.ref.getDownloadURL(); // Get the download URL
     }
 
     // Add product to Firestore
@@ -251,14 +251,14 @@ async function handleAddProduct(event) {
 
 // Search products
 function searchProducts() {
-  const searchInput = document.getElementById("searchInput");
-  if (!searchInput) {
+  const searchInput = document.getElementById("searchInput"); // Get search input
+  if (!searchInput) { // Check if input exists
     console.error("Search input not found");
     return;
   }
 
   const searchTerm = searchInput.value.toLowerCase();
-  if (searchTerm.trim() === "") {
+  if (searchTerm.trim() === "") { // 
     // If we're on products page, reload products
     if (document.getElementById("productsGrid")) {
       loadProducts();
@@ -288,26 +288,27 @@ function performSearch(searchTerm) {
     productsCollection
       .where("isActive", "==", true)
       .get()
-      .then((snapshot) => {
-        const productsGrid = document.getElementById("productsGrid");
-        if (!productsGrid) {
+      .then((snapshot) => { // Get all active products
+        const productsGrid = document.getElementById("productsGrid"); // Get products grid
+        if (!productsGrid) { // Check if grid exists
           console.error("Products grid not found");
           hideLoading();
           return;
         }
 
-        productsGrid.innerHTML = "";
-        let hasResults = false;
+        productsGrid.innerHTML = ""; // Clear existing products
+        let hasResults = false; // Flag to track if any results are found
 
-        snapshot.forEach((doc) => {
-          const product = doc.data();
+
+        snapshot.forEach((doc) => { // Loop through each product
+          const product = doc.data(); // Get product data
           if (
             product.name.toLowerCase().includes(searchTerm) ||
-            product.description.toLowerCase().includes(searchTerm)
+            product.description.toLowerCase().includes(searchTerm) // Check name and description
           ) {
-            const productCard = createProductCard(doc.id, product);
-            productsGrid.appendChild(productCard);
-            hasResults = true;
+            const productCard = createProductCard(doc.id, product); // Create product card
+            productsGrid.appendChild(productCard); // Add to grid
+            hasResults = true; // Set flag to true
           }
         });
 
@@ -356,20 +357,20 @@ async function viewProduct(productId) {
   showLoading();
 
   try {
-    const productDoc = await productsCollection.doc(productId).get();
+    const productDoc = await productsCollection.doc(productId).get(); // Fetch product document
     if (!productDoc.exists) {
       showMessage("Product not found", "error");
       return;
     }
 
-    const product = productDoc.data();
+    const product = productDoc.data(); // Get product data
 
     // Get vendor information
     let vendorName = "Unknown Vendor";
     try {
-      const vendorDoc = await usersCollection.doc(product.vendorId).get();
+      const vendorDoc = await usersCollection.doc(product.vendorId).get(); // Fetch vendor document
       if (vendorDoc.exists) {
-        vendorName = vendorDoc.data().name || "Unknown Vendor";
+        vendorName = vendorDoc.data().name || "Unknown Vendor"; // Get vendor name
       }
     } catch (error) {
       console.error("Error loading vendor info:", error);
@@ -676,13 +677,13 @@ async function editProduct(productId) {
 
   try {
     // Get product data
-    const productDoc = await productsCollection.doc(productId).get();
+    const productDoc = await productsCollection.doc(productId).get(); // Fetch product document
     if (!productDoc.exists) {
       showMessage("Product not found", "error");
       return;
     }
 
-    const product = productDoc.data();
+    const product = productDoc.data(); // Get product data
 
     // Check if user is the owner
     if (product.vendorId !== currentUser.uid) {
@@ -799,18 +800,18 @@ async function handleEditProduct(event, productId) {
     if (imageFile) {
       const storageRef = storage
         .ref()
-        .child(`products/${Date.now()}_${imageFile.name}`);
-      const snapshot = await storageRef.put(imageFile);
-      imageUrl = await snapshot.ref.getDownloadURL();
+        .child(`products/${Date.now()}_${imageFile.name}`); // Unique path
+      const snapshot = await storageRef.put(imageFile); // storageRef.put(imageFile); uploads the file
+      imageUrl = await snapshot.ref.getDownloadURL(); // Get the download URL
 
       // Delete old image if it exists and is not a placeholder
       if (
         currentProduct.imageUrl &&
-        !currentProduct.imageUrl.includes("placeholder")
+        !currentProduct.imageUrl.includes("placeholder") // Simple check to avoid deleting placeholder images
       ) {
         try {
-          const oldImageRef = storage.refFromURL(currentProduct.imageUrl);
-          await oldImageRef.delete();
+          const oldImageRef = storage.refFromURL(currentProduct.imageUrl); // Get reference to old image
+          await oldImageRef.delete(); // Delete old image
         } catch (deleteError) {
           console.warn("Could not delete old image:", deleteError);
         }
@@ -855,14 +856,14 @@ async function deleteProduct(productId) {
 
   try {
     // Get product details first to verify ownership
-    const productDoc = await productsCollection.doc(productId).get();
+    const productDoc = await productsCollection.doc(productId).get(); // Fetch product document
 
     if (!productDoc.exists) {
       showMessage("Product not found", "error");
       return;
     }
 
-    const product = productDoc.data();
+    const product = productDoc.data(); // Get product data
 
     // Verify that the current user owns this product
     if (product.vendorId !== currentUser.uid) {
@@ -871,21 +872,21 @@ async function deleteProduct(productId) {
     }
 
     // Show confirmation dialog
-    const isConfirmed = await showDeleteConfirmation(product.name);
-    if (!isConfirmed) {
+    const isConfirmed = await showDeleteConfirmation(product.name); // Await user confirmation
+    if (!isConfirmed) { // If user cancels
       return;
     }
 
     showLoading();
 
     // Delete the product document
-    await productsCollection.doc(productId).delete();
+    await productsCollection.doc(productId).delete(); // Delete product from Firestore
 
     // If the product has an image, delete it from storage
     if (product.imageUrl && product.imageUrl.includes("firebase")) {
       try {
-        const imageRef = firebase.storage().refFromURL(product.imageUrl);
-        await imageRef.delete();
+        const imageRef = firebase.storage().refFromURL(product.imageUrl); // Get reference to the image
+        await imageRef.delete(); // Delete the image
       } catch (storageError) {
         console.warn("Could not delete product image:", storageError);
         // Continue even if image deletion fails
