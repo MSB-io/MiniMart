@@ -555,23 +555,24 @@ async function refreshDeliveryQueue() {
   showLoading();
   
   try {
+    // Fetch pending orders containing vendor's products
     const snapshot = await ordersCollection
       .where("status", "==", "pending")
       .get();
     
     // Clear existing queue
-    deliveryQueue.heap = [];
+    deliveryQueue.heap = []; // Reset the heap
     
     // Convert to array and sort by createdAt locally
-    const orders = [];
+    const orders = []; // Temporary array to hold orders
     snapshot.forEach((doc) => {
-      const order = doc.data();
-      if (Array.isArray(order.items)) {
-        const hasVendorItems = order.items.some(
+      const order = doc.data(); // Get order data
+      if (Array.isArray(order.items)) { // Ensure items is an array
+        const hasVendorItems = order.items.some( // Check if any item belongs to vendor
           (item) => item && item.vendorId === currentUser.uid
         );
-        if (hasVendorItems) {
-          orders.push({
+        if (hasVendorItems) { // Only include orders with vendor's items
+          orders.push({ // Push order with id and createdAt
             id: doc.id,
             ...order,
             createdAt: order.createdAt || { toMillis: () => Date.now(), toDate: () => new Date() }
@@ -593,9 +594,9 @@ async function refreshDeliveryQueue() {
     });
     
     // Update stats
-    const { express, normal } = deliveryQueue.getOrdersByType();
-    const expressCount = document.getElementById('expressOrdersCount');
-    const normalCount = document.getElementById('normalOrdersCount');
+    const { express, normal } = deliveryQueue.getOrdersByType(); // Get counts
+    const expressCount = document.getElementById('expressOrdersCount'); // Update UI
+    const normalCount = document.getElementById('normalOrdersCount'); // Update UI
     
     if (expressCount) expressCount.textContent = express.length;
     if (normalCount) normalCount.textContent = normal.length;
