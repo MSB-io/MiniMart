@@ -5,19 +5,19 @@ let cart = [];
 // Initialize cart with proper validation
 function initializeCart() {
   try {
-    const storedCart = localStorage.getItem("cart");
-    if (storedCart) {
-      const parsedCart = JSON.parse(storedCart);
+    const storedCart = localStorage.getItem("cart"); // Get cart from localStorage
+    if (storedCart) { // If cart exists
+      const parsedCart = JSON.parse(storedCart); // Parse it
       // Ensure it's an array
-      if (Array.isArray(parsedCart)) {
-        cart = parsedCart;
+      if (Array.isArray(parsedCart)) { // Validate cart
+        cart = parsedCart; // Set cart
       } else {
         console.warn("Invalid cart data in localStorage, resetting cart");
         cart = [];
         localStorage.removeItem("cart");
       }
     } else {
-      cart = [];
+      cart = []; // No cart found, initialize empty
     }
   } catch (error) {
     console.error("Error parsing cart from localStorage:", error);
@@ -34,7 +34,7 @@ async function addToCart(productId) {
   console.log("Adding product to cart:", productId);
 
   // Ensure cart is always an array
-  if (!Array.isArray(cart)) {
+  if (!Array.isArray(cart)) { // Check if cart is an array
     console.warn("Cart is not an array, reinitializing...");
     initializeCart();
   }
@@ -46,25 +46,25 @@ async function addToCart(productId) {
   }
 
   try {
-    const productDoc = await productsCollection.doc(productId).get();
+    const productDoc = await productsCollection.doc(productId).get(); // Fetch product data
     if (!productDoc.exists) {
       showMessage("Product not found", "error");
       return;
     }
 
-    const product = productDoc.data();
-    console.log("Product data:", product);
+    const product = productDoc.data(); // Get product data
+    console.log("Product data:", product); 
 
     // Check if product is already in cart
-    const existingItem = cart.find((item) => item.id === productId);
+    const existingItem = cart.find((item) => item.id === productId); // Find existing item in cart
 
-    if (existingItem) {
-      if (existingItem.quantity >= product.stock) {
+    if (existingItem) { // If exists, increment quantity
+      if (existingItem.quantity >= product.stock) { // Check stock limit
         showMessage("Cannot add more items - insufficient stock", "error");
         return;
       }
-      existingItem.quantity += 1;
-    } else {
+      existingItem.quantity += 1; // Increment quantity 
+    } else { // If not, add new item
       cart.push({
         id: productId,
         name: product.name,
@@ -77,8 +77,8 @@ async function addToCart(productId) {
     }
 
     console.log("Cart after adding:", cart);
-    saveCart();
-    updateCartUI();
+    saveCart(); // Save cart to localStorage
+    updateCartUI(); // Update cart UI
     showMessage("Product added to cart!", "success");
   } catch (error) {
     console.error("Error adding to cart:", error);
@@ -102,22 +102,22 @@ function removeFromCart(productId) {
 }
 
 // Update quantity in cart
-function updateCartQuantity(productId, newQuantity) {
+function updateCartQuantity(productId, newQuantity) { // Set new quantity
   // Ensure cart is an array
   if (!Array.isArray(cart)) {
     initializeCart();
   }
 
-  const item = cart.find((item) => item.id === productId);
+  const item = cart.find((item) => item.id === productId); // Find item in cart
   if (item) {
-    if (newQuantity <= 0) {
-      removeFromCart(productId);
-    } else if (newQuantity <= item.maxStock) {
-      item.quantity = newQuantity;
-      saveCart();
-      updateCartUI();
+    if (newQuantity <= 0) { // Remove if quantity is zero or less
+      removeFromCart(productId); 
+    } else if (newQuantity <= item.maxStock) { // Check stock limit
+      item.quantity = newQuantity; // Update quantity
+      saveCart(); // Save cart to localStorage
+      updateCartUI(); // Update cart UI
       if (document.getElementById("cartPage")) {
-        showCart();
+        showCart(); // Refresh cart page
       }
     } else {
       showMessage("Insufficient stock available", "error");
@@ -129,11 +129,11 @@ function updateCartQuantity(productId, newQuantity) {
 function saveCart() {
   try {
     // Ensure cart is an array before saving
-    if (!Array.isArray(cart)) {
+    if (!Array.isArray(cart)) { // Validate cart
       console.error("Attempting to save non-array cart:", cart);
-      cart = [];
+      cart = []; // Reset to empty array
     }
-    localStorage.setItem("cart", JSON.stringify(cart));
+    localStorage.setItem("cart", JSON.stringify(cart)); // Save cart
     console.log("Cart saved to localStorage:", cart);
   } catch (error) {
     console.error("Error saving cart to localStorage:", error);
@@ -154,11 +154,11 @@ function updateCartUI() {
       return;
     }
 
-    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0); // Total items in cart
 
-    if (totalItems > 0) {
-      cartCount.textContent = totalItems;
-      cartCount.classList.remove("hidden");
+    if (totalItems > 0) { // Show count if items exist
+      cartCount.textContent = totalItems; // Set text content
+      cartCount.classList.remove("hidden");  // Ensure it's visible
     } else {
       cartCount.classList.add("hidden");
     }
@@ -285,34 +285,34 @@ function getCartTotal() {
 
 // Proceed to checkout
 function proceedToCheckout() {
-  if (!currentUser) {
+  if (!currentUser) { // Check if user is logged in
     showMessage("Please login to proceed to checkout", "error");
     showLogin();
     return;
   }
 
-  if (cart.length === 0) {
+  if (cart.length === 0) { // Check if cart is empty
     showMessage("Your cart is empty", "error");
     return;
   }
 
-  showCheckout();
+  showCheckout(); // Show checkout page
 }
 
 // Show checkout page
 function showCheckout() {
-  if (!currentUser) {
+  if (!currentUser) { // Ensure user is logged in
     showMessage("Please login to proceed with checkout", "error");
-    showLogin();
+    showLogin(); // Show login
     return;
   }
 
-  if (cart.length === 0) {
+  if (cart.length === 0) { // Ensure cart is not empty
     showMessage("Your cart is empty", "error");
     return;
   }
 
-  const subtotal = getCartTotal();
+  const subtotal = getCartTotal(); // Calculate subtotal
 
   const content = `
     <div class="max-w-4xl mx-auto px-4 py-8">
@@ -441,17 +441,17 @@ function updateDeliveryCost() {
 
 // Enhanced place order function with delivery priority
 async function placeOrderWithDelivery() {
-  const form = document.getElementById("checkoutForm");
-  if (!form.checkValidity()) {
-    form.reportValidity();
+  const form = document.getElementById("checkoutForm"); // Get form
+  if (!form.checkValidity()) { // Validate form
+    form.reportValidity(); // Report errors
     return;
   }
 
-  showLoading();
+  showLoading(); // Show loading indicator
 
   try {
-    const deliveryType = document.querySelector('input[name="deliveryType"]:checked').value;
-    const deliveryCost = deliveryType === 'express' ? 150 : 50;
+    const deliveryType = document.querySelector('input[name="deliveryType"]:checked').value; // Get delivery type
+    const deliveryCost = deliveryType === 'express' ? 150 : 50; // Set delivery cost
     
     const shippingInfo = {
       name: document.getElementById("shippingName").value,
@@ -460,7 +460,7 @@ async function placeOrderWithDelivery() {
       address: document.getElementById("shippingAddress").value,
       city: document.getElementById("shippingCity").value,
       zip: document.getElementById("shippingZip").value,
-    };
+    }; // Get shipping info
 
     // Add individual item status to each cart item
     const itemsWithStatus = cart.map(item => ({
@@ -484,22 +484,22 @@ async function placeOrderWithDelivery() {
       estimatedDelivery: deliveryType === 'express' ? 
         new Date(Date.now() + 2 * 24 * 60 * 60 * 1000) : // 2 days
         new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)   // 5 days
-    };
+    }; // Prepare order data
 
-    const orderRef = await ordersCollection.add(orderData);
+    const orderRef = await ordersCollection.add(orderData); // Create order in Firestore
 
     // Add to delivery priority queue
     deliveryQueue.enqueue({
       id: orderRef.id,
       ...orderData,
       createdAt: { toMillis: () => Date.now(), toDate: () => new Date() }
-    });
+    }); // Enqueue order for delivery
 
     // Update product stock
     for (const item of cart) {
-      const productRef = productsCollection.doc(item.id);
-      await productRef.update({
-        stock: firebase.firestore.FieldValue.increment(-item.quantity),
+      const productRef = productsCollection.doc(item.id); // Get product reference
+      await productRef.update({ // Update stock
+        stock: firebase.firestore.FieldValue.increment(-item.quantity), // Subtract quantity from stock
       });
     }
 

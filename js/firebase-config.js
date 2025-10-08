@@ -101,13 +101,13 @@ function hideLoading() {
 
 // Delivery Priority Queue System
 class DeliveryPriorityQueue {
-  constructor() {
-    this.heap = [];
+  constructor() { // Max-heap based priority queue
+    this.heap = []; // Array to store heap elements
   }
 
   // Calculate priority score based on delivery type and order time
-  calculatePriority(order) {
-    let priority = 0;
+  calculatePriority(order) { // Higher score = higher priority
+    let priority = 0; // Base priority
     
     // Express delivery gets highest priority
     if (order.deliveryType === 'express') {
@@ -129,35 +129,35 @@ class DeliveryPriorityQueue {
   enqueue(order) {
     const priorityOrder = {
       ...order,
-      priority: this.calculatePriority(order),
-      queuedAt: new Date()
+      priority: this.calculatePriority(order), // Calculate priority score
+      queuedAt: new Date() // Timestamp when added to queue
     };
     
-    this.heap.push(priorityOrder);
-    this.heapifyUp(this.heap.length - 1);
+    this.heap.push(priorityOrder); // Add to end of heap
+    this.heapifyUp(this.heap.length - 1); // Restore heap property
     
     // Update queue display
-    this.updateQueueDisplay();
+    this.updateQueueDisplay(); // Update display after enqueue
   }
 
   dequeue() {
     if (this.heap.length === 0) return null;
     
-    const highestPriority = this.heap[0];
-    const lastElement = this.heap.pop();
+    const highestPriority = this.heap[0]; // Root of the heap
+    const lastElement = this.heap.pop(); // Remove last element
     
-    if (this.heap.length > 0) {
-      this.heap[0] = lastElement;
-      this.heapifyDown(0);
+    if (this.heap.length > 0) { // If heap not empty after pop
+      this.heap[0] = lastElement; // Move last element to root
+      this.heapifyDown(0); // Restore heap property
     }
     
-    this.updateQueueDisplay();
-    return highestPriority;
+    this.updateQueueDisplay(); // Update display after dequeue
+    return highestPriority; // Return the highest priority order
   }
 
-  heapifyUp(index) {
+  heapifyUp(index) { // Restore heap property upwards
     while (index > 0) {
-      const parentIndex = Math.floor((index - 1) / 2);
+      const parentIndex = Math.floor((index - 1) / 2); 
       if (this.heap[parentIndex].priority >= this.heap[index].priority) break;
       
       [this.heap[parentIndex], this.heap[index]] = [this.heap[index], this.heap[parentIndex]];
@@ -165,7 +165,7 @@ class DeliveryPriorityQueue {
     }
   }
 
-  heapifyDown(index) {
+  heapifyDown(index) { // Restore heap property downwards
     while (true) {
       let maxIndex = index;
       const leftChild = 2 * index + 1;
@@ -189,11 +189,11 @@ class DeliveryPriorityQueue {
   }
 
   size() {
-    return this.heap.length;
+    return this.heap.length; // Return number of orders in queue
   }
 
   peek() {
-    return this.heap.length > 0 ? this.heap[0] : null;
+    return this.heap.length > 0 ? this.heap[0] : null; // Return highest priority order without removing
   }
 
   // Get all orders separated by delivery type

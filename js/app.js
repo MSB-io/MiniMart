@@ -583,8 +583,8 @@ async function refreshDeliveryQueue() {
     
     // Sort orders by created date (newest first) and add to queue
     orders.sort((a, b) => {
-      const aTime = a.createdAt.toMillis ? a.createdAt.toMillis() : Date.now();
-      const bTime = b.createdAt.toMillis ? b.createdAt.toMillis() : Date.now();
+      const aTime = a.createdAt.toMillis ? a.createdAt.toMillis() : Date.now(); // Handle Firestore Timestamp or fallback
+      const bTime = b.createdAt.toMillis ? b.createdAt.toMillis() : Date.now(); // Handle Firestore Timestamp or fallback
       return bTime - aTime;
     });
     
@@ -598,8 +598,8 @@ async function refreshDeliveryQueue() {
     const expressCount = document.getElementById('expressOrdersCount'); // Update UI
     const normalCount = document.getElementById('normalOrdersCount'); // Update UI
     
-    if (expressCount) expressCount.textContent = express.length;
-    if (normalCount) normalCount.textContent = normal.length;
+    if (expressCount) expressCount.textContent = express.length; // Set counts
+    if (normalCount) normalCount.textContent = normal.length; // Set counts
     
   } catch (error) {
     console.error("Error loading delivery queue:", error);
@@ -611,21 +611,21 @@ async function refreshDeliveryQueue() {
 
 // Process next highest priority order
 async function processNextDelivery() {
-  const nextOrder = deliveryQueue.dequeue();
+  const nextOrder = deliveryQueue.dequeue(); // Get next order from queue
   if (!nextOrder) {
     showMessage("No orders in queue to process", "info");
     return;
   }
   
   try {
-    await ordersCollection.doc(nextOrder.id).update({
+    await ordersCollection.doc(nextOrder.id).update({ // Update order status
       status: "processing",
       processedAt: firebase.firestore.FieldValue.serverTimestamp(),
       processedBy: currentUser.uid
     });
     
-    showMessage(`Processing ${nextOrder.deliveryType} order #${nextOrder.id.substring(0, 8)}`, "success");
-    refreshDeliveryQueue();
+    showMessage(`Processing ${nextOrder.deliveryType} order #${nextOrder.id.substring(0, 8)}`, "success"); 
+    refreshDeliveryQueue(); 
     
   } catch (error) {
     console.error("Error processing order:", error);
@@ -636,15 +636,15 @@ async function processNextDelivery() {
 // Process specific delivery order
 async function processDeliveryOrder(orderId) {
   try {
-    await ordersCollection.doc(orderId).update({
+    await ordersCollection.doc(orderId).update({ // Update order status
       status: "processing",
       processedAt: firebase.firestore.FieldValue.serverTimestamp(),
       processedBy: currentUser.uid
     });
     
     // Remove from queue
-    deliveryQueue.heap = deliveryQueue.heap.filter(order => order.id !== orderId);
-    deliveryQueue.updateQueueDisplay();
+    deliveryQueue.heap = deliveryQueue.heap.filter(order => order.id !== orderId); // Remove specific order
+    deliveryQueue.updateQueueDisplay(); // Refresh display
     
     showMessage(`Order #${orderId.substring(0, 8)} is now being processed`, "success");
     refreshDeliveryQueue();
@@ -745,18 +745,18 @@ async function viewOrderDetails(orderId) {
 }
 
 // Update individual item status for vendor
-async function updateVendorItemStatus(orderId, itemId, newStatus) {
+async function updateVendorItemStatus(orderId, itemId, newStatus) { // newStatus can be 'processing', 'shipped', 'delivered', 'cancelled'
   try {
-    const orderDoc = await ordersCollection.doc(orderId).get();
+    const orderDoc = await ordersCollection.doc(orderId).get(); // Fetch order document
     if (!orderDoc.exists) {
       showMessage("Order not found", "error");
       return;
     }
     
-    const order = orderDoc.data();
+    const order = orderDoc.data(); // Get order data
     const updatedItems = order.items.map(item => {
       // Only update items belonging to current vendor
-      if (item.id === itemId && item.vendorId === currentUser.uid) {
+      if (item.id === itemId && item.vendorId === currentUser.uid) { // Match item by ID and vendor
         return {
           ...item,
           itemStatus: newStatus,
@@ -768,9 +768,9 @@ async function updateVendorItemStatus(orderId, itemId, newStatus) {
     });
     
     // Calculate new overall order status
-    const overallStatus = calculateOverallOrderStatus(updatedItems);
+    const overallStatus = calculateOverallOrderStatus(updatedItems); // Determine overall status based on item statuses
     
-    await ordersCollection.doc(orderId).update({
+    await ordersCollection.doc(orderId).update({ // Update order document
       items: updatedItems,
       status: overallStatus,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -779,7 +779,7 @@ async function updateVendorItemStatus(orderId, itemId, newStatus) {
     showMessage(`Item status updated to ${newStatus}`, "success");
     
     // Refresh the order management view
-    loadVendorOrdersForManagement();
+    loadVendorOrdersForManagement(); // Reload orders to reflect changes
     
   } catch (error) {
     console.error("Error updating item status:", error);
@@ -788,10 +788,10 @@ async function updateVendorItemStatus(orderId, itemId, newStatus) {
 }
 
 // Update order status
-async function updateOrderStatus(orderId, newStatus) {
+async function updateOrderStatus(orderId, newStatus) { // newStatus can be 'shipped' or 'delivered'
   try {
-    await ordersCollection.doc(orderId).update({
-      status: newStatus,
+    await ordersCollection.doc(orderId).update({ // Update order document
+      status: newStatus, 
       updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       updatedBy: currentUser.uid
     });

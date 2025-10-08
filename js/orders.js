@@ -76,15 +76,15 @@ async function loadOrders(statusFilter = "") {
       const allOrdersSnapshot = await query.get();
       const vendorOrders = [];
 
-      allOrdersSnapshot.forEach((doc) => {
+      allOrdersSnapshot.forEach((doc) => { // Check each order
         try {
           const order = doc.data();
           // Safely check if items array exists and has vendor items
           if (Array.isArray(order.items)) {
-            const hasVendorItems = order.items.some(
+            const hasVendorItems = order.items.some( // Check if any item belongs to vendor
               (item) => item && item.vendorId === currentUser.uid
             );
-            if (hasVendorItems) {
+            if (hasVendorItems) { // If yes, include this order
               vendorOrders.push({ id: doc.id, data: order });
             }
           }
@@ -95,22 +95,22 @@ async function loadOrders(statusFilter = "") {
 
       // Sort vendor orders by date (client-side sorting)
       vendorOrders.sort((a, b) => {
-        const dateA = getOrderTimestamp(a.data.createdAt);
-        const dateB = getOrderTimestamp(b.data.createdAt);
+        const dateA = getOrderTimestamp(a.data.createdAt); // Convert to timestamp
+        const dateB = getOrderTimestamp(b.data.createdAt); // Convert to timestamp
         return dateB - dateA; // Descending order (newest first)
       });
 
-      displayOrders(vendorOrders, statusFilter);
+      displayOrders(vendorOrders, statusFilter); // Display filtered orders
       hideLoading();
       return;
     }
 
-    const snapshot = await query.get();
-    const orders = [];
-    snapshot.forEach((doc) => {
+    const snapshot = await query.get(); // Execute query
+    const orders = []; // Array to hold orders
+    snapshot.forEach((doc) => { // Process each order 
       try {
-        const orderData = doc.data();
-        orders.push({ id: doc.id, data: orderData });
+        const orderData = doc.data(); // Get order data
+        orders.push({ id: doc.id, data: orderData }); // Add to orders array
       } catch (docError) {
         console.error("Error processing order document:", doc.id, docError);
       }
@@ -118,12 +118,12 @@ async function loadOrders(statusFilter = "") {
 
     // Sort orders by date in JavaScript (client-side sorting)
     orders.sort((a, b) => {
-      const dateA = getOrderTimestamp(a.data.createdAt);
-      const dateB = getOrderTimestamp(b.data.createdAt);
+      const dateA = getOrderTimestamp(a.data.createdAt); // Convert to timestamp
+      const dateB = getOrderTimestamp(b.data.createdAt); // Convert to timestamp
       return dateB - dateA; // Descending order (newest first)
     });
 
-    displayOrders(orders, statusFilter);
+    displayOrders(orders, statusFilter); // Display filtered orders
   } catch (error) {
     console.error("Error loading orders:", error);
     showMessage(`Error loading orders: ${error.message}`, "error");
