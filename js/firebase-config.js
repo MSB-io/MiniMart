@@ -43,30 +43,30 @@ auth.onAuthStateChanged((user) => {
 async function loadUserData() {
   if (currentUser) {
     try {
-      const userDoc = await usersCollection.doc(currentUser.uid).get();
+      const userDoc = await usersCollection.doc(currentUser.uid).get(); // Fetch user data from Firestore
       if (userDoc.exists) {
-        const userData = userDoc.data();
-        userRole = userData.role;
+        const userData = userDoc.data(); // Get user data
+        userRole = userData.role; // Set user role
 
         // Update username in navigation
         const userNameElement = document.getElementById("userName");
         if (userNameElement) {
-          userNameElement.textContent = userData.name || currentUser.email;
+          userNameElement.textContent = userData.name || currentUser.email; // Fallback to email if name not set
         }
 
         // Auto-redirect vendors to dashboard if they're on home page after login
         // Check if we're on the home page (contains homePage element) or login/register forms
-        const isOnHomePage = document.getElementById("homePage");
+        const isOnHomePage = document.getElementById("homePage"); 
         const isOnLoginForm = document.getElementById("loginForm");
         const isOnRegisterForm = document.getElementById("registerForm");
 
         if (
           userRole === "vendor" &&
-          (isOnHomePage || isOnLoginForm || isOnRegisterForm)
+          (isOnHomePage || isOnLoginForm || isOnRegisterForm) // Check for login/register forms
         ) {
           // Small delay to ensure smooth transition
           setTimeout(() => {
-            showVendorDashboard();
+            showVendorDashboard(); // Function to show vendor dashboard
           }, 500);
         }
       }

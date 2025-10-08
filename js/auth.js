@@ -120,22 +120,22 @@ function showRegister() {
 
 // Handle login
 async function handleLogin(event) {
-  event.preventDefault();
-  showLoading();
+  event.preventDefault(); // Prevent form submission
+  showLoading(); // Show loading indicator
 
-  const email = document.getElementById("loginEmail").value;
-  const password = document.getElementById("loginPassword").value;
+  const email = document.getElementById("loginEmail").value; // Get email input
+  const password = document.getElementById("loginPassword").value; // Get password input
 
   try {
-    await auth.signInWithEmailAndPassword(email, password);
+    await auth.signInWithEmailAndPassword(email, password); // Sign in with Firebase Auth
 
     // Wait for user data to load and then redirect based on role
-    const user = auth.currentUser;
+    const user = auth.currentUser; // Get current user
     if (user) {
-      const userDoc = await usersCollection.doc(user.uid).get();
+      const userDoc = await usersCollection.doc(user.uid).get(); // Fetch user data from Firestore
       if (userDoc.exists) {
-        const userData = userDoc.data();
-        userRole = userData.role;
+        const userData = userDoc.data(); // Get user data
+        userRole = userData.role; // Set user role
 
         showMessage("Login successful!", "success");
 
@@ -166,7 +166,7 @@ async function adminQuickLogin() {
 
   try {
     // Try to sign in first
-    await auth.signInWithEmailAndPassword(adminEmail, adminPassword);
+    await auth.signInWithEmailAndPassword(adminEmail, adminPassword); // Sign in with Firebase Auth
 
     // Wait for user data to load and then redirect
     const user = auth.currentUser;
@@ -242,20 +242,21 @@ async function adminQuickLogin() {
 
 // Handle registration
 async function handleRegister(event) {
-  event.preventDefault();
-  showLoading();
+  event.preventDefault(); // Prevent form submission
+  showLoading(); // Show loading indicator
 
+  // Get form values
   const name = document.getElementById("registerName").value;
   const email = document.getElementById("registerEmail").value;
   const password = document.getElementById("registerPassword").value;
   const role = document.getElementById("registerRole").value;
 
   try {
-    const userCredential = await auth.createUserWithEmailAndPassword(
+    const userCredential = await auth.createUserWithEmailAndPassword( // Create user with Firebase Auth
       email,
       password
     );
-    const user = userCredential.user;
+    const user = userCredential.user; // Get created user
 
     // Save user data to Firestore
     await usersCollection.doc(user.uid).set({
@@ -267,7 +268,7 @@ async function handleRegister(event) {
     });
 
     // Set the userRole immediately for redirection
-    userRole = role;
+    userRole = role; // Set user role
 
     showMessage("Account created successfully!", "success");
 
@@ -288,7 +289,7 @@ async function handleRegister(event) {
 // Logout function
 async function logout() {
   try {
-    await auth.signOut();
+    await auth.signOut(); // Sign out from Firebase Auth
     showMessage("Logged out successfully", "success");
     showHome();
   } catch (error) {
