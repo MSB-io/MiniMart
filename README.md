@@ -18,7 +18,6 @@ You can access the live demo here: https://mvoms3.web.app/
 ### ✅ Product Management
 
 - **Product Listing** - Vendors can add, edit, and delete products
-- **Product Categories** - Organized categorization system
 - **Product Search** - Search and filtering functionality
 - **Product Details** - Images, descriptions, pricing, and stock management
 - **Image Upload** - Firebase Storage integration for product images
@@ -145,18 +144,6 @@ service firebase.storage {
 1. Clone or download the project files
 2. Update the Firebase configuration in `js/firebase-config.js`
 3. Open `index.html` in a web browser
-4. Or serve using a local HTTP server:
-
-```bash
-# Using Python
-python -m http.server 8000
-
-# Using Node.js (if you have http-server installed)
-npx http-server
-
-# Using PHP
-php -S localhost:8000
-```
 
 ## User Roles
 
@@ -179,7 +166,6 @@ php -S localhost:8000
 ### Admin
 
 - Manage users and vendors
-- Manage product categories
 - View all orders and products
 - Access comprehensive analytics
 
@@ -196,7 +182,7 @@ php -S localhost:8000
 
 - Image upload with Firebase Storage
 - Stock tracking and management
-- Search and filter functionality
+- Search functionality
 
 ### Shopping Cart
 
